@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .neon-glow {
+    color: #00ff88;
+    text-shadow: 0 0 5px #00ff88, 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px #00ff88;
+    animation: neonPulse 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes neonPulse {
+    from { 
+      filter: drop-shadow(0 0 20px #00ff88);
+      text-shadow: 0 0 5px #00ff88, 0 0 10px #00ff88, 0 0 20px #00ff88;
+    }
+    to { 
+      filter: drop-shadow(0 0 30px #00ff88);
+      text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #00ff88;
+    }
+  }
+  
+  .gradient-bg {
+    background: linear-gradient(135deg, #0a0a0a 0%, #0d1b2a 25%, #1b263b 50%, #0d1b2a 75%, #0a0a0a 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 20s ease infinite;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .btn-neon {
+    @apply relative px-10 py-5 text-lg font-bold text-green-400 bg-transparent border-2 border-green-400 rounded-full transition-all duration-500 ease-out;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4), inset 0 0 15px rgba(0, 255, 136, 0.1);
+  }
+  
+  .btn-neon:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+    color: #000;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 0 60px rgba(0, 255, 136, 0.4), inset 0 0 20px rgba(0, 255, 136, 0.2);
+  }
+  
+  .btn-neon:active:not(:disabled) {
+    transform: scale(0.98) translateY(0);
+  }
+  
+  .input-neon {
+    @apply w-full px-6 py-4 text-lg bg-gray-900/80 backdrop-blur-sm border-2 border-gray-700 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-300;
+  }
+  
+  .input-neon:focus {
+    @apply border-green-400;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+}
