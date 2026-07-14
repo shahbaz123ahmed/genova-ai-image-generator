@@ -9,19 +9,19 @@ import { IoClose } from "react-icons/io5";
 const PLANS = [
   {
     name: "Lite",
-    price: 50,
+    price: 1,
     credits: 100,
     desc: "Best for personal use.",
   },
   {
     name: "Standard",
-    price: 250,
+    price: 5,
     credits: 550,
     desc: "Best for business use.",
   },
   {
     name: "Premium",
-    price: 250,
+    price: 25,
     credits: 5000,
     desc: "Best for enterprise use.",
   },
@@ -258,7 +258,7 @@ export default function BuyPage() {
               </h2>
               <p className="text-gray-400 mb-4">{plan.desc}</p>
               <div className="text-3xl font-bold text-white mb-2">
-                ₹{plan.price}
+                ${plan.price}
                 <span className="text-lg font-normal text-gray-400">
                   {" "}
                   / {plan.credits} credits
