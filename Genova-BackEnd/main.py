@@ -13,7 +13,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://genova-ai-image-generator.vercel.app"
+        "https://genova-ai-image-generator.vercel.app",
+        "https://genovaai.tech",
+        "https://www.genovaai.tech"
     ],
     allow_credentials=True,
     allow_methods=["*"],
