@@ -11,6 +11,7 @@ client = MongoClient(MONGODB_URI)
 db = client["ai_gen_db"]
 users_collection = db["users"]
 images_collection = db["images"]
+requests_collection = db["requests"]
 
 # Test connection (optional, comment out if issues)
 try:

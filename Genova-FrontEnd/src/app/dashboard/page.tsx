@@ -43,7 +43,10 @@ export default function Dashboard() {
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showLogout, setShowLogout] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>("Free");
+  const [planMonths, setPlanMonths] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -60,8 +63,12 @@ export default function Dashboard() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCredits(res.data.credits);
+        setCurrentPlan(res.data.current_plan || "Free");
+        setPlanMonths(res.data.plan_months || 0);
       } catch {
         setCredits(0);
+        setCurrentPlan("Free");
+        setPlanMonths(0);
       }
     };
     fetchCredits();
@@ -214,11 +221,27 @@ export default function Dashboard() {
     router.push("/"); // Redirect to landing page
   };
 
-  const downloadImage = (url: string, filename: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
+  const downloadImage = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Failed to download image:", error);
+      // Fallback
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.download = filename;
+      link.click();
+    }
   };
 
   return (
@@ -270,12 +293,17 @@ export default function Dashboard() {
                     />
                   </svg>
                 </button>
-                {/* Logout Popup on click */}
                 {showLogout && (
                   <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-green-400 z-50">
                     <button
+                      onClick={() => { setShowPlanModal(true); setShowLogout(false); }}
+                      className="w-full px-4 py-3 text-gray-700 hover:bg-green-50 rounded-t-xl text-left font-semibold border-b border-gray-100"
+                    >
+                      Your Plan
+                    </button>
+                    <button
                       onClick={logout}
-                      className="w-full px-4 py-3 text-red-600 hover:bg-green-50 rounded-xl text-left font-semibold"
+                      className="w-full px-4 py-3 text-red-600 hover:bg-green-50 rounded-b-xl text-left font-semibold"
                     >
                       Logout
                     </button>
@@ -431,7 +459,7 @@ export default function Dashboard() {
               {/* Show selected style as a badge inside the input area */}
               <div className="mt-4 flex justify-end">
                 <span className="inline-block bg-green-900/60 text-green-300 px-3 py-1 rounded-full text-xs font-semibold mr-4">
-                  Credits: {credits}
+                  Plan: {currentPlan}
                 </span>
                 <span className="inline-block bg-green-900/60 text-green-300 px-3 py-1 rounded-full text-xs font-semibold">
                   {selectedStyle}
@@ -743,6 +771,68 @@ export default function Dashboard() {
             </div>
           </div>
         </footer>
+
+        {/* Plan Details Modal */}
+        {showPlanModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-8 w-full max-w-md relative">
+              <button
+                onClick={() => setShowPlanModal(false)}
+                className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-2xl font-bold text-white mb-6">Your Plan Details</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                  <span className="text-gray-400 font-medium">Current Plan</span>
+                  {currentPlan.toLowerCase() === "free" ? (
+                    <span className="text-xl font-bold text-red-400 bg-red-500/10 px-3 py-1 rounded-lg border border-red-500/20">No Active Plan</span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-green-400">{currentPlan}</span>
+                      <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                        Active
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {currentPlan.toLowerCase() !== "free" ? (
+                  <>
+                    <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                      <span className="text-gray-400 font-medium">Available Credits</span>
+                      <span className="text-xl font-bold text-white">{credits}</span>
+                    </div>
+                    {planMonths > 0 && (
+                      <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                        <span className="text-gray-400 font-medium">Duration</span>
+                        <span className="text-xl font-bold text-white">{planMonths} {planMonths === 1 ? 'Month' : 'Months'}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Trial Credits</span>
+                    <span className="text-xl font-bold text-white">{credits}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={() => { setShowPlanModal(false); router.push("/buy"); }}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white rounded-xl py-3 font-semibold shadow-lg shadow-green-500/20 transition-all"
+                >
+                  {currentPlan.toLowerCase() === "free" ? "Choose a Plan" : "Upgrade Plan"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

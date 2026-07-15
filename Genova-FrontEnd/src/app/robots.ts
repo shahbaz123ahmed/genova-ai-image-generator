@@ -1,14 +1,26 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://genovaai.tech"
-
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/dashboard'], // Prevent search engines from indexing the private dashboard
-    },
-    sitemap: `${baseUrl}/sitemap.xml`,
-  }
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/admin/",
+          "/dashboard/",
+          "/api/",
+          "/auth/",
+          "/login/",
+          "/signup/",
+          "/checkout/",
+          "/payment/",
+          "/_next/",
+        ],
+      },
+    ],
+    sitemap: `${siteConfig.url}/sitemap.xml`,
+    host: siteConfig.url,
+  };
 }

@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, images
+from fastapi.staticfiles import StaticFiles
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Ensure static directory exists
+os.makedirs("static", exist_ok=True)
 
 app = FastAPI()
 
@@ -13,6 +18,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
         "https://genova-ai-image-generator.vercel.app",
         "https://genovaai.tech",
         "https://www.genovaai.tech"
@@ -21,6 +28,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

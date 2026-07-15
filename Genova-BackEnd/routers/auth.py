@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from database import users_collection
-from models import User, Token  # ← Ye import fixed – models.py se User aur Token
+from database import users_collection, requests_collection
+from models import User, Token, CreditUpdate, PlanRequest, ApproveRequestData  # ← Ye import fixed – models.py se User aur Token
+from bson import ObjectId
 from utils import get_password_hash, create_access_token
 
 load_dotenv()
@@ -35,7 +36,8 @@ async def signup(user: User):
         "first_name": user.first_name,
         "email": user.email,
         "hashed_password": hashed_password,
-        "credits": 10
+        "credits": 12,
+        "current_plan": "Free"
     })
     print("Inserted user ID:", result.inserted_id)
     # Generate token for the new user
@@ -90,10 +92,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 @router.get("/me", response_model=dict)
 async def get_profile(current_user: dict = Depends(get_current_user)):
     credits = current_user["credits"] if "credits" in current_user else 0
+    current_plan = current_user.get("current_plan", "Free")
+    plan_months = current_user.get("plan_months", 0)
     return {
         "first_name": current_user.get("first_name"),
         "email": current_user.get("email"),
-        "credits": credits
+        "credits": credits,
+        "current_plan": current_plan,
+        "plan_months": plan_months
     }
 
 @router.post("/decrement-credit")
@@ -104,3 +110,106 @@ async def decrement_credit(current_user: dict = Depends(get_current_user)):
     )
     user = users_collection.find_one({"email": current_user["email"]})
     return {"credits": user["credits"]}
+
+@router.get("/users")
+async def get_all_users():
+    users_cursor = users_collection.find({})
+    users = []
+    for u in users_cursor:
+        users.append({
+            "id": str(u["_id"]),
+            "first_name": u.get("first_name", ""),
+            "email": u.get("email", ""),
+            "credits": u.get("credits", 0)
+        })
+    return users
+
+@router.put("/users/{user_id}/credits")
+async def update_user_credits(user_id: str, credit_update: CreditUpdate):
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+        
+    result = users_collection.update_one(
+        {"_id": obj_id},
+        {"$set": {"credits": credit_update.credits}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Credits updated successfully"}
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str):
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+        
+    result = users_collection.delete_one({"_id": obj_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
+@router.post("/requests")
+async def create_plan_request(plan_req: PlanRequest):
+    new_req = {
+        "name": plan_req.name,
+        "email": plan_req.email,
+        "phone": plan_req.phone,
+        "plan_name": plan_req.plan_name,
+        "status": "pending",
+        "created_at": datetime.utcnow()
+    }
+    result = requests_collection.insert_one(new_req)
+    return {"message": "Request submitted successfully", "id": str(result.inserted_id)}
+
+@router.get("/requests")
+async def get_all_requests():
+    reqs_cursor = requests_collection.find({}).sort("created_at", -1)
+    reqs = []
+    for r in reqs_cursor:
+        reqs.append({
+            "id": str(r["_id"]),
+            "name": r.get("name", ""),
+            "email": r.get("email", ""),
+            "phone": r.get("phone", ""),
+            "plan_name": r.get("plan_name", ""),
+            "status": r.get("status", ""),
+            "created_at": r.get("created_at", datetime.utcnow()).isoformat()
+        })
+    return reqs
+
+@router.put("/requests/{req_id}/approve")
+async def approve_plan_request(req_id: str, data: ApproveRequestData):
+    try:
+        obj_id = ObjectId(req_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+    
+    req = requests_collection.find_one({"_id": obj_id})
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+        
+    if req.get("status") == "approved":
+        return {"message": "Request is already approved"}
+        
+    plan_name = data.plan_name.lower()
+    credits_to_add = 0
+    if "lite" in plan_name:
+        credits_to_add = 300 * data.months
+    elif "pro" in plan_name:
+        credits_to_add = 1500 * data.months
+    elif "enterprise" in plan_name:
+        credits_to_add = 9999 * data.months
+        
+    user = users_collection.find_one({"email": req.get("email")})
+    if user:
+        users_collection.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"current_plan": data.plan_name, "plan_months": data.months}, "$inc": {"credits": credits_to_add}}
+        )
+    
+    requests_collection.update_one({"_id": obj_id}, {"$set": {"status": "approved", "plan_name": data.plan_name, "months": data.months}})
+    
+    return {"message": "Plan request approved and user updated"}

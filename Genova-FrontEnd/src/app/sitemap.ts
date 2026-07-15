@@ -1,26 +1,56 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://genovaai.tech"
+  const now = new Date();
 
-  return [
+  const routes = [
     {
-      url: `${baseUrl}`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
+      path: "",
+      changeFrequency: "weekly" as const,
       priority: 1,
     },
     {
-      url: `${baseUrl}/buy`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
+      path: "/ai-image-generator",
+      changeFrequency: "weekly" as const,
+      priority: 0.95,
+    },
+    {
+      path: "/text-to-image",
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    },
+    {
+      path: "/free-ai-image-generator",
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    },
+    {
+      path: "/ai-art-generator",
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    },
+    {
+      path: "/gallery",
+      changeFrequency: "daily" as const,
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/dashboard`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.5,
+      path: "/pricing",
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
     },
-  ]
+    {
+      path: "/blog",
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+  ];
+
+  return routes.map(({ path, changeFrequency, priority }) => ({
+    url: `${siteConfig.url}${path}`,
+    lastModified: now,
+    changeFrequency,
+    priority,
+  }));
 }
