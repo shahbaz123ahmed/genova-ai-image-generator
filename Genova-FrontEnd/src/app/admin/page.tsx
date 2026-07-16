@@ -157,8 +157,8 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteRequest = async (reqId: string) => {
-    if (!confirm("Are you sure you want to delete this plan request?")) return;
+  const handleDeleteRequest = async (reqId: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete the plan request from ${email}?`)) return;
     setIsUpdating(true);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
@@ -524,7 +524,7 @@ export default function AdminDashboard() {
                 Cancel
               </button>
               <button
-                onClick={handleApproveRequest}
+                onClick={handleApprovePlan}
                 disabled={isUpdating}
                 className="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
