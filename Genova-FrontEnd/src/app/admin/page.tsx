@@ -38,8 +38,10 @@ export default function AdminDashboard() {
   const [approvePlan, setApprovePlan] = useState<string>("Pro");
   const [approveMonths, setApproveMonths] = useState<number>(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   const router = useRouter();
 
   const fetchUsers = async () => {
@@ -58,7 +60,6 @@ export default function AdminDashboard() {
   };
 
   const fetchRequests = async () => {
-    setLoadingRequests(true);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
       const res = await fetch(`${baseUrl}/auth/requests`);
@@ -73,48 +74,36 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleApproveRequest = async () => {
-    if (!approvingRequest) return;
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUsers();
+      fetchRequests();
+    }
+  }, [isAuthenticated]);
+
+  const handleUpdateCredits = async () => {
+    if (!editingUser) return;
     setIsUpdating(true);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
-      const res = await fetch(`${baseUrl}/auth/requests/${approvingRequest.id}/approve`, {
+      const res = await fetch(`${baseUrl}/auth/update-credits`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plan_name: approvePlan,
-          months: approveMonths,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: editingUser.id, credits: newCredits }),
       });
       if (res.ok) {
-        setRequests((prev) =>
-          prev.map((r) =>
-            r.id === approvingRequest.id ? { ...r, status: "approved", plan_name: approvePlan } : r
-          )
-        );
-        fetchUsers(); // Refresh users to get new credits and plan
-        setApprovingRequest(null);
+        alert("Credits updated!");
+        setEditingUser(null);
+        fetchUsers();
       } else {
-        alert("Failed to approve request.");
+        alert("Update failed");
       }
-    } catch (error) {
-      console.error("Error approving request:", error);
+    } catch {
+      alert("Error updating credits");
     } finally {
       setIsUpdating(false);
     }
   };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "requests") {
-      fetchRequests();
-    }
-  }, [activeTab]);
 
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`Are you sure you want to delete the user account for ${email}?`)) {
@@ -127,22 +116,49 @@ export default function AdminDashboard() {
         method: "DELETE",
       });
       if (res.ok) {
-        setUsers((prev) => prev.filter((u) => u.id !== userId));
-        alert("User deleted successfully.");
+        alert("User deleted successfully!");
+        fetchUsers();
       } else {
-        alert("Failed to delete user.");
+        alert("Failed to delete user");
       }
-    } catch (error) {
-      console.error("Error deleting user:", error);
+    } catch {
+      alert("Error deleting user");
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleDeleteRequest = async (reqId: string, email: string) => {
-    if (!confirm(`Are you sure you want to delete the plan request from ${email}?`)) {
-      return;
+  const handleApprovePlan = async () => {
+    if (!approvingRequest) return;
+    setIsUpdating(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+      const res = await fetch(`${baseUrl}/auth/requests/${approvingRequest.id}/approve`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_name: approvePlan, months: approveMonths }),
+      });
+      if (res.ok) {
+        alert("Plan approved and user updated!");
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === approvingRequest.id ? { ...r, status: "approved", plan_name: approvePlan } : r
+          )
+        );
+        setApprovingRequest(null);
+        fetchUsers();
+      } else {
+        alert("Approval failed");
+      }
+    } catch {
+      alert("Error approving plan");
+    } finally {
+      setIsUpdating(false);
     }
+  };
+
+  const handleDeleteRequest = async (reqId: string) => {
+    if (!confirm("Are you sure you want to delete this plan request?")) return;
     setIsUpdating(true);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
@@ -150,41 +166,13 @@ export default function AdminDashboard() {
         method: "DELETE",
       });
       if (res.ok) {
-        setRequests((prev) => prev.filter((r) => r.id !== reqId));
+        alert("Request deleted successfully!");
+        fetchRequests();
       } else {
-        alert("Failed to delete request.");
+        alert("Failed to delete request");
       }
-    } catch (error) {
-      console.error("Error deleting request:", error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleUpdateCredits = async () => {
-    if (!editingUser) return;
-    setIsUpdating(true);
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
-      const res = await fetch(`${baseUrl}/auth/users/${editingUser.id}/credits`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ credits: Number(newCredits) }),
-      });
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === editingUser.id ? { ...u, credits: Number(newCredits) } : u
-          )
-        );
-        setEditingUser(null);
-      } else {
-        alert("Failed to update credits.");
-      }
-    } catch (error) {
-      console.error("Error updating credits:", error);
+    } catch {
+      alert("Error deleting request");
     } finally {
       setIsUpdating(false);
     }
@@ -192,10 +180,10 @@ export default function AdminDashboard() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === ADMIN_PASSWORD) {
+    if (emailInput === ADMIN_EMAIL && passwordInput === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
     } else {
-      alert("Invalid password");
+      alert("Invalid email or password");
     }
   };
 
@@ -212,11 +200,22 @@ export default function AdminDashboard() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <input
+                type="email"
+                placeholder="Enter admin email..."
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full bg-[#131b2c] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400/50"
+                required
+              />
+            </div>
+            <div>
+              <input
                 type="password"
                 placeholder="Enter admin password..."
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 className="w-full bg-[#131b2c] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400/50"
+                required
               />
             </div>
             <button
