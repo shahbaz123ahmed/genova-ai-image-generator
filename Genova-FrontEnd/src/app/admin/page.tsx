@@ -139,6 +139,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteRequest = async (reqId: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete the plan request from ${email}?`)) {
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+      const res = await fetch(`${baseUrl}/auth/requests/${reqId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setRequests((prev) => prev.filter((r) => r.id !== reqId));
+      } else {
+        alert("Failed to delete request.");
+      }
+    } catch (error) {
+      console.error("Error deleting request:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleUpdateCredits = async () => {
     if (!editingUser) return;
     setIsUpdating(true);
@@ -383,14 +405,22 @@ export default function AdminDashboard() {
                               </span>
                             </td>
                             <td className="p-4 text-right">
-                              {req.status === 'pending' && (
+                              <div className="flex justify-end gap-2">
+                                {req.status === 'pending' && (
+                                  <button
+                                    onClick={() => { setApprovingRequest(req); setApprovePlan(req.plan_name || "Pro"); setApproveMonths(1); }}
+                                    className="text-sm font-medium text-green-400 hover:text-green-300 bg-green-400/10 hover:bg-green-400/20 px-4 py-2 rounded-lg transition-colors"
+                                  >
+                                    Approve
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => { setApprovingRequest(req); setApprovePlan(req.plan_name || "Pro"); setApproveMonths(1); }}
-                                  className="text-sm font-medium text-green-400 hover:text-green-300 bg-green-400/10 hover:bg-green-400/20 px-4 py-2 rounded-lg transition-colors"
+                                  onClick={() => handleDeleteRequest(req.id, req.email)}
+                                  className="text-sm font-medium text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-4 py-2 rounded-lg transition-colors"
                                 >
-                                  Approve
+                                  Delete
                                 </button>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         ))

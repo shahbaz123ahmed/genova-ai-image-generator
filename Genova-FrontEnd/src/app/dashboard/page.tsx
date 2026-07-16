@@ -44,9 +44,19 @@ export default function Dashboard() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showLogout, setShowLogout] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  
   const [credits, setCredits] = useState<number | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string>("Free");
   const [planMonths, setPlanMonths] = useState<number>(0);
+  
+  const [userProfile, setUserProfile] = useState<{
+    first_name: string;
+    email: string;
+    phone?: string;
+    profile_pic?: string;
+  } | null>(null);
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -55,8 +65,8 @@ export default function Dashboard() {
       router.push("/");
       return;
     }
-    // Fetch credits from backend
-    const fetchCredits = async () => {
+    // Fetch credits and profile from backend
+    const fetchProfile = async () => {
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
@@ -65,13 +75,20 @@ export default function Dashboard() {
         setCredits(res.data.credits);
         setCurrentPlan(res.data.current_plan || "Free");
         setPlanMonths(res.data.plan_months || 0);
+        setUserProfile({
+          first_name: res.data.first_name,
+          email: res.data.email,
+          phone: res.data.phone,
+          profile_pic: res.data.profile_pic,
+        });
       } catch {
         setCredits(0);
         setCurrentPlan("Free");
         setPlanMonths(0);
+        setUserProfile(null);
       }
     };
-    fetchCredits();
+    fetchProfile();
   }, [router]);
 
   useEffect(() => {
@@ -221,6 +238,64 @@ export default function Dashboard() {
     router.push("/"); // Redirect to landing page
   };
 
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/profile-pic`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          profile_pic: res.data.profile_pic,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to upload profile picture:", err);
+      alert("Failed to upload profile picture. Please try again.");
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!userProfile) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/profile`,
+        {
+          first_name: userProfile.first_name,
+          phone: userProfile.phone || "",
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("Profile updated successfully!");
+      setShowProfileModal(false);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile.");
+    }
+  };
+
   const downloadImage = async (url: string, filename: string) => {
     try {
       const response = await fetch(url);
@@ -276,28 +351,45 @@ export default function Dashboard() {
                   aria-label="User menu"
                   onClick={() => setShowLogout((prev) => !prev)}
                 >
-                  {/* People/Face Icon */}
-                  <svg
-                    className={`w-9 h-9 text-green-400 bg-green-900/30 rounded-full p-1 border-2 border-green-400 transition-all duration-200 ${
+                  {userProfile?.profile_pic ? (
+                    <div className={`w-9 h-9 rounded-full overflow-hidden border-2 border-green-400 transition-all duration-200 ${
                       showLogout ? "scale-110 border-green-300 shadow-lg" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                    }`}>
+                      <img 
+                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${userProfile.profile_pic}`}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <svg
+                      className={`w-9 h-9 text-green-400 bg-green-900/30 rounded-full p-1 border-2 border-green-400 transition-all duration-200 ${
+                        showLogout ? "scale-110 border-green-300 shadow-lg" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  )}
                 </button>
                 {showLogout && (
                   <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-green-400 z-50">
                     <button
-                      onClick={() => { setShowPlanModal(true); setShowLogout(false); }}
+                      onClick={() => { setShowProfileModal(true); setShowLogout(false); }}
                       className="w-full px-4 py-3 text-gray-700 hover:bg-green-50 rounded-t-xl text-left font-semibold border-b border-gray-100"
+                    >
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => { setShowPlanModal(true); setShowLogout(false); }}
+                      className="w-full px-4 py-3 text-gray-700 hover:bg-green-50 text-left font-semibold border-b border-gray-100"
                     >
                       Your Plan
                     </button>
@@ -771,6 +863,141 @@ export default function Dashboard() {
             </div>
           </div>
         </footer>
+
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-8 w-full max-w-2xl relative">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-2xl font-bold text-white mb-8">Your Profile</h2>
+              
+              <div className="flex flex-col md:flex-row gap-8 mb-8">
+                {/* Left: Profile Picture */}
+                <div className="flex flex-col items-center justify-center md:border-r border-white/10 md:pr-8">
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#131b2c] shadow-lg bg-green-900/30 group">
+                    {userProfile?.profile_pic ? (
+                      <img 
+                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${userProfile.profile_pic}`}
+                        alt="Profile Picture"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-green-400">
+                        <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                    {/* Hover Overlay for Upload */}
+                    <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleProfilePicUpload} 
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3 text-center">Click to change picture</p>
+                </div>
+
+                {/* Right: Active Plan Details */}
+                <div className="flex-1 flex flex-col justify-center space-y-4">
+                  <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Current Plan</span>
+                    {currentPlan.toLowerCase() === "free" ? (
+                      <span className="text-sm font-bold text-red-400 bg-red-500/10 px-3 py-1 rounded-lg border border-red-500/20">No Active Plan</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-green-400">{currentPlan}</span>
+                        <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                          Active
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {currentPlan.toLowerCase() !== "free" ? (
+                    <>
+                      <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                        <span className="text-gray-400 font-medium">Available Credits</span>
+                        <span className="text-lg font-bold text-white">{credits}</span>
+                      </div>
+                      {planMonths > 0 && (
+                        <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                          <span className="text-gray-400 font-medium">Duration</span>
+                          <span className="text-lg font-bold text-white">{planMonths} {planMonths === 1 ? 'Month' : 'Months'}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 flex justify-between items-center">
+                      <span className="text-gray-400 font-medium">Trial Credits</span>
+                      <span className="text-lg font-bold text-white">{credits}</span>
+                    </div>
+                  )}
+                  {currentPlan.toLowerCase() === "free" && (
+                    <button
+                      onClick={() => { setShowProfileModal(false); router.push("/buy"); }}
+                      className="w-full text-sm bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 rounded-xl py-2.5 font-semibold transition-all mt-2"
+                    >
+                      Upgrade Plan
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 md:col-span-2">
+                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Email (Read Only)</p>
+                  <p className="text-white font-medium">{userProfile?.email || "N/A"}</p>
+                </div>
+
+                <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 focus-within:border-green-400/50 transition-colors">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 block">Name</label>
+                  <input
+                    type="text"
+                    value={userProfile?.first_name || ""}
+                    onChange={(e) => userProfile && setUserProfile({ ...userProfile, first_name: e.target.value })}
+                    className="w-full bg-transparent text-white font-medium text-lg focus:outline-none"
+                    placeholder="Enter your name"
+                  />
+                </div>
+                
+                <div className="bg-[#131b2c] border border-white/5 rounded-2xl p-5 focus-within:border-green-400/50 transition-colors">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 block">Mobile Number</label>
+                  <input
+                    type="tel"
+                    value={userProfile?.phone || ""}
+                    onChange={(e) => userProfile && setUserProfile({ ...userProfile, phone: e.target.value })}
+                    className="w-full bg-transparent text-white font-medium text-lg focus:outline-none"
+                    placeholder="Enter your mobile number"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={handleSaveProfile}
+                  className="w-full md:w-auto px-8 bg-green-500 hover:bg-green-600 text-white rounded-xl py-3 font-semibold shadow-lg shadow-green-500/20 transition-all"
+                >
+                  Save Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Plan Details Modal */}
         {showPlanModal && (

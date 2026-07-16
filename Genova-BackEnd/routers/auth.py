@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -97,10 +97,27 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     return {
         "first_name": current_user.get("first_name"),
         "email": current_user.get("email"),
+        "phone": current_user.get("phone", ""),
         "credits": credits,
         "current_plan": current_plan,
-        "plan_months": plan_months
+        "plan_months": plan_months,
+        "profile_pic": current_user.get("profile_pic")
     }
+
+class ProfileUpdate(BaseModel):
+    first_name: str
+    phone: str
+
+@router.put("/profile")
+async def update_profile(
+    data: ProfileUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    users_collection.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {"first_name": data.first_name, "phone": data.phone}}
+    )
+    return {"message": "Profile updated successfully"}
 
 @router.post("/decrement-credit")
 async def decrement_credit(current_user: dict = Depends(get_current_user)):
@@ -213,3 +230,43 @@ async def approve_plan_request(req_id: str, data: ApproveRequestData):
     requests_collection.update_one({"_id": obj_id}, {"$set": {"status": "approved", "plan_name": data.plan_name, "months": data.months}})
     
     return {"message": "Plan request approved and user updated"}
+
+@router.delete("/requests/{req_id}")
+async def delete_plan_request(req_id: str):
+    try:
+        obj_id = ObjectId(req_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+    
+    result = requests_collection.delete_one({"_id": obj_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    return {"message": "Request deleted successfully"}
+
+@router.post("/profile-pic")
+async def upload_profile_pic(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # Create a unique filename
+        ext = file.filename.split(".")[-1]
+        filename = f"profile_{current_user['_id']}_{datetime.utcnow().timestamp()}.{ext}"
+        filepath = os.path.join("uploads", "profiles", filename)
+        
+        # Save the file
+        with open(filepath, "wb") as buffer:
+            buffer.write(await file.read())
+            
+        # Update user in DB
+        pic_url = f"/uploads/profiles/{filename}"
+        users_collection.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {"profile_pic": pic_url}}
+        )
+        
+        return {"message": "Profile picture updated", "profile_pic": pic_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
