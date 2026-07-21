@@ -324,10 +324,10 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#181e27] flex flex-col">
         {/* Navbar */}
         <header className="fixed top-0 w-full bg-black/40 backdrop-blur-xl z-50 border-b border-green-400/30">
-          <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+          <div className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
             {/* Logo + Text */}
-            <div className="flex items-center gap-3 animate-fade-pulse">
-              <div className="h-12 w-12 relative flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 animate-fade-pulse">
+              <div className="h-9 w-9 sm:h-12 sm:w-12 relative flex-shrink-0">
                 <Image
                   src="/icon.png"
                   alt="Genova Logo"
@@ -335,7 +335,7 @@ export default function Dashboard() {
                   className="rounded-lg object-contain"
                 />
               </div>
-              <span className="text-3xl md:text-4xl font-black tracking-wider genova-outline">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wider genova-outline">
                 Genova
               </span>
             </div>
@@ -467,10 +467,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        <main className="flex-1 max-w-3xl mx-auto px-4 py-10 pt-24 w-full">
+        <main className="flex-1 max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10 pt-20 sm:pt-24 w-full">
           {/* Prompt Input */}
           <form onSubmit={generateImage}>
-            <div className="bg-[#232b39] rounded-2xl p-6 mb-8 shadow-lg border border-green-400/40 focus-within:border-green-400 transition-all duration-200">
+            <div className="bg-[#232b39] rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg border border-green-400/40 focus-within:border-green-400 transition-all duration-200">
               <div className="flex items-center gap-3">
                 {/* Palette Icon for style selection */}
                 <button
@@ -493,7 +493,7 @@ export default function Dashboard() {
                 </button>
                 <input
                   type="text"
-                  className="flex-1 bg-transparent outline-none text-lg text-white placeholder-gray-400"
+                  className="flex-1 bg-transparent outline-none text-base sm:text-lg text-white placeholder-gray-400 min-w-0"
                   placeholder="Enter prompt."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
@@ -520,7 +520,7 @@ export default function Dashboard() {
               </div>
               {/* Styles Dropdown */}
               {showStyles && (
-                <div className="mt-3 p-4 bg-gray-900/95 backdrop-blur-sm border-2 border-gray-700 rounded-xl absolute z-10">
+                <div className="mt-3 p-3 sm:p-4 bg-gray-900/95 backdrop-blur-sm border-2 border-gray-700 rounded-xl absolute z-20 left-0 right-0 w-full sm:w-auto max-h-[50vh] overflow-y-auto">
                   <h3 className="text-sm font-semibold mb-3 text-gray-300">
                     Select Art Style
                   </h3>
@@ -562,9 +562,9 @@ export default function Dashboard() {
 
           {/* Generated Image */}
           {imageUrl && (
-            <div className="bg-[#202736] rounded-2xl p-6 mb-8 shadow-lg relative group">
+            <div className="bg-[#202736] rounded-2xl p-4 sm:p-6 mb-8 shadow-lg relative group">
               <div className="flex justify-center">
-                <div className="relative w-[350px] h-[350px] md:w-[400px] md:h-[400px] rounded-xl overflow-hidden">
+                <div className="relative w-full max-w-[380px] sm:max-w-[400px] aspect-square rounded-xl overflow-hidden mx-auto">
                   <Image
                     src={imageUrl}
                     alt="Generated"
@@ -598,10 +598,10 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 justify-between items-center mt-6">
                 <button
                   onClick={saveImage}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition"
                 >
                   <svg width="20" height="20" fill="none">
                     <circle
@@ -622,7 +622,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => downloadImage(imageUrl, "ai-image.png")}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-green-600 hover:bg-green-700 text-white transition"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold bg-green-600 hover:bg-green-700 text-white transition"
                 >
                   <svg width="20" height="20" fill="none">
                     <rect
@@ -867,7 +867,7 @@ export default function Dashboard() {
         {/* Profile Modal */}
         {showProfileModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-8 w-full max-w-2xl relative">
+            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-5 sm:p-8 w-[94vw] sm:w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setShowProfileModal(false)}
                 className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
@@ -1002,7 +1002,7 @@ export default function Dashboard() {
         {/* Plan Details Modal */}
         {showPlanModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-8 w-full max-w-md relative">
+            <div className="bg-[#181e27] border border-green-400/30 rounded-3xl shadow-2xl p-5 sm:p-8 w-[94vw] sm:w-full max-w-md relative max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setShowPlanModal(false)}
                 className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"

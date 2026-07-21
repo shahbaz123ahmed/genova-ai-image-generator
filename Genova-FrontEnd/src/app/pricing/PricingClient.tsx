@@ -241,14 +241,14 @@ export default function BuyPage() {
     <div className="min-h-screen bg-[#181e27] flex flex-col">
       {/* Navbar (copied from dashboard) */}
       <header className="fixed top-0 w-full bg-black/40 backdrop-blur-xl z-50 border-b border-green-400/30">
-        <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           {/* Go Back Button */}
           <button
-            className="flex items-center gap-2 text-green-400 hover:text-green-300 font-semibold text-lg"
+            className="flex items-center gap-1.5 sm:gap-2 text-green-400 hover:text-green-300 font-semibold text-base sm:text-lg"
             onClick={() => router.push("/dashboard")}
           >
             {/* Reverse Arrow SVG */}
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
               <path
                 d="M15 19l-7-7 7-7"
                 stroke="currentColor"
@@ -260,8 +260,8 @@ export default function BuyPage() {
             Go Back
           </button>
           {/* Logo and Brand */}
-          <div className="flex items-center gap-3 animate-fade-pulse">
-            <div className="h-12 w-12 relative flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 animate-fade-pulse">
+            <div className="h-9 w-9 sm:h-12 sm:w-12 relative flex-shrink-0">
               <Image
                 src="/icon.png"
                 alt="Genova Logo"
@@ -269,7 +269,7 @@ export default function BuyPage() {
                 className="rounded-lg object-contain"
               />
             </div>
-            <span className="text-3xl md:text-4xl font-black tracking-wider genova-outline">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wider genova-outline">
               Genova
             </span>
           </div>
@@ -298,28 +298,28 @@ export default function BuyPage() {
         `}</style>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-900/10 via-[#181e27] to-[#181e27]">
-        <div className="text-center mb-16 relative">
-          <div className="absolute -top-6 -right-12 bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full border border-green-500/30 animate-pulse">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-24 sm:pt-32 pb-16 sm:pb-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-900/10 via-[#181e27] to-[#181e27]">
+        <div className="text-center mb-10 sm:mb-16 relative">
+          <div className="absolute -top-6 right-0 sm:-right-12 bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full border border-green-500/30 animate-pulse">
             Save 25%
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-white tracking-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold mb-4 sm:mb-6 text-white tracking-tight">
             Simple, transparent <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">pricing</span>
           </h1>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-400 max-w-2xl mx-auto">
             Choose the perfect plan for your creative needs. Upgrade, downgrade, or cancel anytime.
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl justify-center items-stretch transition-all duration-300">
+        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 w-full max-w-7xl justify-center items-stretch transition-all duration-300">
           {PLANS.map((plan, idx) => {
             const isPro = plan.name === "Pro";
             return (
               <div
                 key={plan.name}
-                className={`relative bg-[#131b2c]/80 backdrop-blur-xl rounded-[20px] flex flex-col px-8 py-10 w-full lg:w-1/3 transition-all duration-300 ${
+                className={`relative bg-[#131b2c]/80 backdrop-blur-xl rounded-[20px] flex flex-col px-6 sm:px-8 py-8 sm:py-10 w-full lg:w-1/3 transition-all duration-300 ${
                   isPro 
-                    ? "border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)] scale-105 z-10" 
+                    ? "border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)] lg:scale-105 z-10" 
                     : "border-white/5 hover:-translate-y-2 hover:scale-[1.02] shadow-xl hover:border-white/10"
                 }`}
                 onMouseEnter={() => setHovered(idx)}
@@ -375,7 +375,7 @@ export default function BuyPage() {
         </div>
 
         {/* Comparison Footer */}
-        <div className="mt-20 flex flex-wrap justify-center gap-6 md:gap-12 text-sm text-gray-400">
+        <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-8 text-sm text-gray-400">
           <div className="flex items-center gap-2">
             <span className="text-green-400 text-lg">✅</span> Secure Payments
           </div>
@@ -391,7 +391,7 @@ export default function BuyPage() {
       {/* Contact Sales / Manual Payment Modal */}
       {showPayment && selectedPlan !== null && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="relative bg-[#131b2c] rounded-2xl shadow-2xl p-0 max-w-xl w-full overflow-hidden border border-green-500/30">
+          <div className="relative bg-[#131b2c] rounded-2xl shadow-2xl p-0 w-[94vw] sm:w-full max-w-xl overflow-hidden border border-green-500/30 max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
               onClick={() => setShowPayment(false)}
@@ -400,7 +400,7 @@ export default function BuyPage() {
               <IoClose size={24} />
             </button>
             {isFormSubmitted ? (
-              <div className="p-8 text-center flex flex-col items-center">
+              <div className="p-5 sm:p-8 text-center flex flex-col items-center">
                 <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
                   <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -418,7 +418,7 @@ export default function BuyPage() {
                 </button>
               </div>
             ) : (
-              <div className="p-8 flex flex-col">
+              <div className="p-5 sm:p-8 flex flex-col">
                 <div className="text-center mb-6">
                   <h2 className="text-2xl font-bold text-white mb-2">Request {PLANS[selectedPlan].name} Plan</h2>
                   <p className="text-gray-400">

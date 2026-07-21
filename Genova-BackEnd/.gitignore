@@ -22,3 +22,4 @@ dist/
 build/
 *.log
 .DS_Store
+uploads/

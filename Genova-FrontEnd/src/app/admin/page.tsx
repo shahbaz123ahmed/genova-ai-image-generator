@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [approvePlan, setApprovePlan] = useState<string>("Pro");
   const [approveMonths, setApproveMonths] = useState<number>(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
@@ -231,9 +232,75 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#131b2c] text-white font-sans flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#181e27] border-r border-white/5 p-6 flex flex-col hidden md:flex">
+    <div className="min-h-screen bg-[#131b2c] text-white font-sans flex flex-col md:flex-row">
+      {/* Mobile Top Header */}
+      <div className="md:hidden bg-[#181e27] border-b border-white/5 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push("/")}>
+          <div className="h-8 w-8 relative flex-shrink-0">
+            <Image src="/icon.png" alt="Logo" fill className="rounded-lg object-contain" />
+          </div>
+          <span className="text-xl font-black text-green-400">Genova Admin</span>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          className="p-2 rounded-lg bg-white/5 text-gray-300 hover:text-white focus:outline-none"
+          aria-label="Toggle Navigation Menu"
+        >
+          {mobileMenuOpen ? (
+            <IoClose size={24} />
+          ) : (
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-[#181e27] border-b border-white/5 p-4 space-y-2 animate-fade-in z-30">
+          <button
+            onClick={() => { setActiveTab("users"); setMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeTab === "users" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Users ({users.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab("requests"); setMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeTab === "requests" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Plan Requests ({requests.filter(r => r.status === 'pending').length})
+          </button>
+          <a href="/dashboard" className="flex items-center gap-3 text-gray-400 hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg font-medium transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to App
+          </a>
+          <button
+            onClick={() => {
+              setIsAuthenticated(false);
+              setPasswordInput("");
+              router.push("/");
+            }}
+            className="w-full flex items-center gap-3 text-red-400 hover:text-red-300 hover:bg-white/5 px-4 py-3 rounded-lg font-medium transition-colors text-left"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout Admin
+          </button>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="w-64 bg-[#181e27] border-r border-white/5 p-6 flex flex-col hidden md:flex min-h-screen flex-shrink-0">
         <div className="flex items-center gap-3 mb-10 cursor-pointer" onClick={() => router.push("/")}>
           <div className="h-10 w-10 relative flex-shrink-0">
             <Image src="/icon.png" alt="Logo" fill className="rounded-lg object-contain" />
@@ -276,14 +343,14 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {activeTab === "users" && (
             <>
-              <header className="flex justify-between items-end mb-8">
+              <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-                  <p className="text-gray-400">Manually view and manage user credits.</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">User Management</h1>
+                  <p className="text-gray-400 text-sm">Manually view and manage user credits.</p>
                 </div>
                 <div className="bg-[#181e27] border border-white/5 px-6 py-3 rounded-xl flex items-center gap-4">
                   <div>
@@ -295,7 +362,7 @@ export default function AdminDashboard() {
 
               <div className="bg-[#181e27] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse min-w-[550px] sm:min-w-full">
                     <thead>
                       <tr className="bg-white/5 border-b border-white/5 text-gray-400 text-sm">
                         <th className="p-4 font-medium">Name</th>
@@ -354,10 +421,10 @@ export default function AdminDashboard() {
 
           {activeTab === "requests" && (
             <>
-              <header className="flex justify-between items-end mb-8">
+              <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Plan Requests</h1>
-                  <p className="text-gray-400">Users who have submitted a request to buy a plan.</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Plan Requests</h1>
+                  <p className="text-gray-400 text-sm">Users who have submitted a request to buy a plan.</p>
                 </div>
                 <div className="bg-[#181e27] border border-white/5 px-6 py-3 rounded-xl flex items-center gap-4">
                   <div>
@@ -369,7 +436,7 @@ export default function AdminDashboard() {
 
               <div className="bg-[#181e27] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse min-w-[650px] sm:min-w-full">
                     <thead>
                       <tr className="bg-white/5 border-b border-white/5 text-gray-400 text-sm">
                         <th className="p-4 font-medium">Date</th>
@@ -436,7 +503,7 @@ export default function AdminDashboard() {
       {/* Edit Credits Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#181e27] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+          <div className="bg-[#181e27] border border-white/10 rounded-2xl shadow-2xl p-5 sm:p-6 w-[92vw] sm:w-full max-w-md relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setEditingUser(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -480,7 +547,7 @@ export default function AdminDashboard() {
       {/* Approve Request Modal */}
       {approvingRequest && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#181e27] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+          <div className="bg-[#181e27] border border-white/10 rounded-2xl shadow-2xl p-5 sm:p-6 w-[92vw] sm:w-full max-w-md relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setApprovingRequest(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white"
