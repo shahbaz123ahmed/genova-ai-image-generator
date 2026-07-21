@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { IoClose } from "react-icons/io5";
 
 interface HistoryItem {
   _id: string;
@@ -50,6 +51,10 @@ export default function Dashboard() {
   const [currentPlan, setCurrentPlan] = useState<string>("Free");
   const [planMonths, setPlanMonths] = useState<number>(0);
   
+  const [isGuest, setIsGuest] = useState(false);
+  const [guestCount, setGuestCount] = useState(0);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
+  
   const [userProfile, setUserProfile] = useState<{
     first_name: string;
     email: string;
@@ -62,9 +67,14 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/");
+      setIsGuest(true);
+      const count = parseInt(localStorage.getItem("genova_guest_count") || "0", 10);
+      setGuestCount(count);
+      setCredits(Math.max(0, 3 - count));
+      setCurrentPlan("Guest Trial");
       return;
     }
+    setIsGuest(false);
     // Fetch credits and profile from backend
     const fetchProfile = async () => {
       try {
@@ -82,9 +92,12 @@ export default function Dashboard() {
           profile_pic: res.data.profile_pic,
         });
       } catch {
-        setCredits(0);
-        setCurrentPlan("Free");
-        setPlanMonths(0);
+        localStorage.removeItem("token");
+        setIsGuest(true);
+        const count = parseInt(localStorage.getItem("genova_guest_count") || "0", 10);
+        setGuestCount(count);
+        setCredits(Math.max(0, 3 - count));
+        setCurrentPlan("Guest Trial");
         setUserProfile(null);
       }
     };
@@ -93,10 +106,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/");
-      return;
-    }
+    if (!token) return;
     const fetchHistory = async () => {
       try {
         const res = await axios.get(
@@ -114,17 +124,60 @@ export default function Dashboard() {
   const generateImage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!prompt.trim()) return alert("Please enter a prompt!");
-    if (credits === null || credits <= 0) {
-      router.push("/buy"); // <-- Redirect to buy page
-      return;
-    }
-    setCredits(credits - 1); // Decrement credits for demo
+
     const token = localStorage.getItem("token");
+
+    // GUEST MODE GENERATION
     if (!token) {
-      alert("Session expired. Please login again.");
-      router.push("/");
+      const count = parseInt(localStorage.getItem("genova_guest_count") || "0", 10);
+      if (count >= 3) {
+        setShowGuestLimitModal(true);
+        return;
+      }
+
+      setImageUrl("");
+      setCurrentImage(null);
+      setImageLoaded(false);
+      setImageGenerating(true);
+      setLoading(true);
+
+      const startTime = Date.now();
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/generate-guest`,
+          { prompt, style: selectedStyle }
+        );
+        setImageUrl(res.data.image_url);
+        setCurrentImage(res.data);
+        setLoading(false);
+
+        const newCount = count + 1;
+        localStorage.setItem("genova_guest_count", newCount.toString());
+        setGuestCount(newCount);
+        setCredits(Math.max(0, 3 - newCount));
+
+        if (newCount >= 3) {
+          setTimeout(() => {
+            setShowGuestLimitModal(true);
+          }, 1500);
+        }
+      } catch {
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 3000 - elapsedTime);
+        await new Promise((resolve) => setTimeout(resolve, remainingTime));
+        setLoading(false);
+        setImageGenerating(false);
+        alert("Guest generation failed. Please try again.");
+      }
       return;
     }
+
+    // AUTHENTICATED USER GENERATION
+    if (credits === null || credits <= 0) {
+      router.push("/buy");
+      return;
+    }
+    setCredits(credits - 1);
     setImageUrl("");
     setCurrentImage(null);
     setImageLoaded(false);
@@ -142,7 +195,6 @@ export default function Dashboard() {
       setCurrentImage(res.data);
       setLoading(false);
 
-      // After successful image generation:
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/decrement-credit`,
         {},
@@ -380,25 +432,44 @@ export default function Dashboard() {
                   )}
                 </button>
                 {showLogout && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-green-400 z-50">
-                    <button
-                      onClick={() => { setShowProfileModal(true); setShowLogout(false); }}
-                      className="w-full px-4 py-3 text-gray-700 hover:bg-green-50 rounded-t-xl text-left font-semibold border-b border-gray-100"
-                    >
-                      Profile
-                    </button>
-                    <button
-                      onClick={() => { setShowPlanModal(true); setShowLogout(false); }}
-                      className="w-full px-4 py-3 text-gray-700 hover:bg-green-50 text-left font-semibold border-b border-gray-100"
-                    >
-                      Your Plan
-                    </button>
-                    <button
-                      onClick={logout}
-                      className="w-full px-4 py-3 text-red-600 hover:bg-green-50 rounded-b-xl text-left font-semibold"
-                    >
-                      Logout
-                    </button>
+                  <div className="absolute right-0 mt-2 w-44 bg-[#181e27] border border-green-400/50 rounded-xl shadow-2xl z-50 overflow-hidden">
+                    {isGuest ? (
+                      <>
+                        <button
+                          onClick={() => router.push("/?auth=signup")}
+                          className="w-full px-4 py-3 text-green-400 hover:bg-white/5 text-left font-semibold border-b border-white/5 flex items-center gap-2"
+                        >
+                          ✨ Sign Up Free
+                        </button>
+                        <button
+                          onClick={() => router.push("/?auth=login")}
+                          className="w-full px-4 py-3 text-gray-300 hover:bg-white/5 text-left font-semibold"
+                        >
+                          Log In
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => { setShowProfileModal(true); setShowLogout(false); }}
+                          className="w-full px-4 py-3 text-gray-300 hover:bg-white/5 text-left font-semibold border-b border-white/5"
+                        >
+                          Profile
+                        </button>
+                        <button
+                          onClick={() => { setShowPlanModal(true); setShowLogout(false); }}
+                          className="w-full px-4 py-3 text-gray-300 hover:bg-white/5 text-left font-semibold border-b border-white/5"
+                        >
+                          Your Plan
+                        </button>
+                        <button
+                          onClick={logout}
+                          className="w-full px-4 py-3 text-red-400 hover:bg-white/5 text-left font-semibold"
+                        >
+                          Logout
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1055,6 +1126,52 @@ export default function Dashboard() {
                   className="w-full bg-green-500 hover:bg-green-600 text-white rounded-xl py-3 font-semibold shadow-lg shadow-green-500/20 transition-all"
                 >
                   {currentPlan.toLowerCase() === "free" ? "Choose a Plan" : "Upgrade Plan"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Guest Limit Popup Modal */}
+        {showGuestLimitModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-[#181e27] border-2 border-green-400/50 rounded-3xl shadow-[0_0_50px_rgba(34,197,94,0.3)] p-6 sm:p-8 w-[94vw] sm:w-full max-w-md relative text-center">
+              <button
+                onClick={() => setShowGuestLimitModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              >
+                <IoClose size={24} />
+              </button>
+              
+              <div className="w-16 h-16 bg-green-500/20 border border-green-400/40 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                🎨
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+                You've Hit Your <span className="text-green-400">Guest Limit!</span>
+              </h2>
+              
+              <p className="text-gray-300 text-sm sm:text-base mb-6 leading-relaxed">
+                You have used all <strong className="text-white font-bold">3 free guest image generations</strong>. Sign up for a free Genova account now to claim <strong className="text-green-400">Free Credits</strong> and unlock saved history & high-res downloads!
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowGuestLimitModal(false);
+                    router.push("/?auth=signup");
+                  }}
+                  className="w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-500/20 transition-all text-base"
+                >
+                  ✨ Sign Up & Claim Free Credits
+                </button>
+                <button
+                  onClick={() => {
+                    setShowGuestLimitModal(false);
+                    router.push("/?auth=login");
+                  }}
+                  className="w-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-semibold py-3 rounded-xl border border-white/10 transition-all text-sm"
+                >
+                  Already have an account? Log In
                 </button>
               </div>
             </div>

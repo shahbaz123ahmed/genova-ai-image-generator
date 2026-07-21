@@ -22,6 +22,20 @@ export default function Home() {
   const [touchDragging, setTouchDragging] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const authParam = params.get("auth");
+      if (authParam === "signup") {
+        setIsSignup(true);
+        setShowModal(true);
+      } else if (authParam === "login") {
+        setIsSignup(false);
+        setShowModal(true);
+      }
+    }
+  }, []);
+
   // ✅ 48 Beautiful Images - 12 Slides × 4 Images
   const imageGallery = [
     // Slide 1 - Animation/Cartoon
@@ -855,7 +869,7 @@ export default function Home() {
               </p>
 
               <button
-                onClick={() => handleAuthSwitch(false)}
+                onClick={() => router.push("/dashboard")}
                 className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 mt-2"
               >
                 Start Creating →
@@ -1116,7 +1130,7 @@ export default function Home() {
           {/* CTA Button */}
           <div className="text-center mt-12">
             <button
-              onClick={() => handleAuthSwitch(false)}
+              onClick={() => router.push("/dashboard")}
               className="px-10 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105"
             >
               Try All Features Free →
@@ -1265,8 +1279,8 @@ export default function Home() {
           </h2>
 
           <button
-            onClick={() => handleAuthSwitch(false)}
-            className="px-12 py-5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-full font-bold text-xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center gap-3"
+            onClick={() => router.push("/dashboard")}
+            className="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-full font-bold text-xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center gap-3"
           >
             Generate Images ✨
           </button>
