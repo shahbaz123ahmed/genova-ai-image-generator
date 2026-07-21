@@ -541,13 +541,13 @@ export default function Dashboard() {
         <main className="flex-1 max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10 pt-20 sm:pt-24 w-full">
           {/* Prompt Input */}
           <form onSubmit={generateImage}>
-            <div className="bg-[#232b39] rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg border border-green-400/40 focus-within:border-green-400 transition-all duration-200">
+            <div className="bg-[#232b39] rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg border border-green-400/40 focus-within:border-green-400 transition-all duration-200 relative">
               <div className="flex items-center gap-3">
                 {/* Palette Icon for style selection */}
                 <button
                   type="button"
                   onClick={() => setShowStyles((v) => !v)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-green-900 transition border border-green-400 text-green-400"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-green-900 transition border border-green-400 text-green-400 flex-shrink-0"
                   tabIndex={-1}
                   aria-label="Select Art Style"
                 >
@@ -591,11 +591,20 @@ export default function Dashboard() {
               </div>
               {/* Styles Dropdown */}
               {showStyles && (
-                <div className="mt-3 p-3 sm:p-4 bg-gray-900/95 backdrop-blur-sm border-2 border-gray-700 rounded-xl absolute z-20 left-0 right-0 w-full sm:w-auto max-h-[50vh] overflow-y-auto">
-                  <h3 className="text-sm font-semibold mb-3 text-gray-300">
-                    Select Art Style
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="absolute top-full mt-2 left-0 sm:left-4 z-40 w-72 sm:w-80 p-4 bg-[#181e27] border border-green-400/40 rounded-2xl shadow-2xl backdrop-blur-xl animate-fade-in">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-green-400">
+                      Select Art Style
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowStyles(false)}
+                      className="text-gray-400 hover:text-white text-xs font-semibold px-1.5 py-0.5 rounded hover:bg-white/5"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
                     {ART_STYLES.map((style) => (
                       <button
                         key={style}
@@ -604,15 +613,15 @@ export default function Dashboard() {
                           setSelectedStyle(style);
                           setShowStyles(false);
                         }}
-                        className={`text-left p-3 rounded-lg transition-all ${
+                        className={`text-left text-xs font-medium p-2.5 rounded-xl transition-all flex items-center justify-between ${
                           selectedStyle === style
-                            ? "bg-green-500/20 border-2 border-green-400 text-green-400"
-                            : "bg-gray-800/50 border-2 border-transparent hover:border-gray-600 text-gray-300"
+                            ? "bg-green-500/20 border border-green-400 text-green-400 font-bold"
+                            : "bg-[#131b2c] border border-white/5 hover:border-white/20 text-gray-300"
                         }`}
                       >
-                        {style}
+                        <span className="truncate">{style}</span>
                         {selectedStyle === style && (
-                          <span className="float-right">✓</span>
+                          <span className="text-green-400 text-xs ml-1 flex-shrink-0">✓</span>
                         )}
                       </button>
                     ))}
