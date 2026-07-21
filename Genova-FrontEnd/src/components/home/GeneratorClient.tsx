@@ -536,9 +536,9 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* ✅ Button opens modal */}
+          {/* ✅ Button opens dashboard in Guest Mode */}
           <button
-            onClick={() => handleAuthSwitch(false)}
+            onClick={() => router.push("/dashboard")}
             className="px-6 py-2.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-full transition-all duration-300 text-sm font-semibold border border-green-400/30 backdrop-blur-sm hover:scale-105"
           >
             Get Started →
@@ -664,7 +664,7 @@ export default function Home() {
 
           {/* CTA Button */}
           <button
-            onClick={() => handleAuthSwitch(false)}
+            onClick={() => router.push("/dashboard")}
             className="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 active:scale-95"
           >
             🚀 Start Creating Now - It&apos;s Free!
